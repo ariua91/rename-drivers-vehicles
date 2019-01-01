@@ -51,7 +51,8 @@ class driver(object):
         JSON = {'driver': {
             'name':self.name,
             'default_vehicle_id':vehicle_dict[self.paired_veh].vehicle_id,
-            'is_versadrive_user':self.vd_status
+            'is_versadrive_user':self.vd_status,
+            'username':""
         }}
         if self.vd_status:
             JSON['driver']['username'] = self.username
