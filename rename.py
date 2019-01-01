@@ -62,8 +62,6 @@ class driver(object):
         else:
             print "ERROR WITH {0}\n{1}\n{2}\n".format(self, tmp, tmp.text)
 
-        return tmp
-
 def read_excel(file_n):
     '''
     Takes an excel sheet with 2 sheeets,
@@ -104,4 +102,4 @@ if raw_input("Key 'N' to skip vehicle update\n>>").upper().strip() != 'N':
 # perform driver actions
 if raw_input("Key 'N' to skip driver update\n>>").upper().strip() != 'N':
     for driver in driver_list:
-        tmp = driver.update_vf(ENV, COOKIE, vehicle_dict)
+        driver.update_vf(ENV, COOKIE, vehicle_dict)
