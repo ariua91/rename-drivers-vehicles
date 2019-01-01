@@ -3,6 +3,7 @@ import requests
 
 from config_settings import ENV, IMPORT_FN
 
+
 class vehicle(object):
     def __init__(self, row):
         self.vehicle_id   = str(row[0])
@@ -26,7 +27,12 @@ class vehicle(object):
                                }
                            }
         )
-        print self, tmp
+        if tmp.status_code == 200:
+            print self, tmp
+            return None
+        else:
+            print "ERROR WITH {0}\n{1}\n{2}\n".format(self, tmp, tmp.text)
+            return tmp
 
 
 class driver(object):
@@ -59,8 +65,10 @@ class driver(object):
         )
         if tmp.status_code == 200:
             print self, tmp
+            return None
         else:
             print "ERROR WITH {0}\n{1}\n{2}\n".format(self, tmp, tmp.text)
+            return tmp
 
 def read_excel(file_n):
     '''
@@ -95,11 +103,20 @@ COOKIE = raw_input("Login to VF to get a cookie and input it here:\n>>").strip()
 driver_list, vehicle_dict = read_excel(IMPORT_FN)
 
 # perform vehicle actions
+vehicle_error_dict = {}
+
 if raw_input("Key 'N' to skip vehicle update\n>>").upper().strip() != 'N':
-    for veh in vehicle_dict.values():
-        veh.update_vf(ENV, COOKIE)
+    for k, veh in vehicle_dict.iteritems():
+        tmp = veh.update_vf(ENV, COOKIE)
+        if tmp != None:
+            vehicle_error_dict[k] = veh
+
 
 # perform driver actions
+driver_error_list = []
+
 if raw_input("Key 'N' to skip driver update\n>>").upper().strip() != 'N':
     for driver in driver_list:
-        driver.update_vf(ENV, COOKIE, vehicle_dict)
+        tmp = driver.update_vf(ENV, COOKIE, vehicle_dict)
+        if tmp != None:
+            driver_error_list.append(driver)
