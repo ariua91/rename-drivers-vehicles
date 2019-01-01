@@ -31,18 +31,25 @@ class vehicle(object):
             print self, tmp
             return None
         else:
-            print "ERROR WITH {0}\n{1}\n{2}\n".format(self, tmp, tmp.text)
+            print "\nERROR WITH {0}\n{1}\n{2}\n".format(self, tmp, tmp.text)
             return tmp
 
 
 class driver(object):
     def __init__(self, row):
+        TIMESLOTS = {
+            '0': 780,
+            '1': 4380,
+            '2': 7980,
+            '4': 15180,
+        }
         self.driver_id  = str(row[0])
         self.name       = str(row[1])
         self.paired_veh = str(row[2])
         self.vd_status  = row[3]
         self.username   = str(row[4])
         self.password   = str(row[5])
+        self.wh_start   = TIMESLOTS[str(row[6])]
 
     def __repr__(self):
         return '{0} [ID: {1}]'.format(self.name, self.driver_id)
@@ -68,7 +75,32 @@ class driver(object):
             print self, tmp
             return None
         else:
-            print "ERROR WITH {0}\n{1}\n{2}\n".format(self, tmp, tmp.text)
+            print "\nERROR WITH {0}\n{1}\n{2}\n".format(self, tmp, tmp.text)
+            return tmp
+
+    def update_wh_start(self, ENV, COOKIE):
+        tmp_in = requests.get('https://{0}.versafleet.co/drivers/'.format(ENV) + self.driver_id,
+                              headers = {
+                                  'cookie': COOKIE
+                              })
+        WH_JSON = tmp_in.json()['driver']['working_hours']
+        NEW_WH_JSON = {'driver':{'working_hours_attributes':[]}}
+        for wh in WH_JSON:
+            wh['start_time'] = self.wh_start
+            NEW_WH_JSON['driver']['working_hours_attributes'].append(wh)
+
+        tmp = requests.put('https://{0}.versafleet.co/drivers/'.format(ENV) + self.driver_id,
+                           headers = {
+                               'cookie': COOKIE
+                           },
+                           json = NEW_WH_JSON
+        )
+
+        if tmp.status_code == 200:
+            print self, tmp
+            return None
+        else:
+            print "\nERROR WITH {0}\n{1}\n{2}\n".format(self, tmp, tmp.text)
             return tmp
 
 def read_excel(file_n):
@@ -78,7 +110,7 @@ def read_excel(file_n):
     Veh ID | Vehicle Name | Capacity | Speed
 
     DRIVER
-    Driver ID | Driver Name | Vehicle Name | VersaDrive User | Username | Password
+    Driver ID | Driver Name | Vehicle Name | VersaDrive User | Username | Password | Time Slot
     '''
     driver_list = []
     vehicle_dict = {}
@@ -106,7 +138,7 @@ driver_list, vehicle_dict = read_excel(IMPORT_FN)
 # perform vehicle actions
 vehicle_error_dict = {}
 
-if raw_input("Key 'N' to skip vehicle update\n>>").upper().strip() != 'N':
+if raw_input("\nKey 'N' to skip vehicle update\n>>").upper().strip() != 'N':
     for k, veh in vehicle_dict.iteritems():
         tmp = veh.update_vf(ENV, COOKIE)
         if tmp != None:
@@ -116,8 +148,17 @@ if raw_input("Key 'N' to skip vehicle update\n>>").upper().strip() != 'N':
 # perform driver actions
 driver_error_list = []
 
-if raw_input("Key 'N' to skip driver update\n>>").upper().strip() != 'N':
+if raw_input("\nKey 'N' to skip driver update\n>>").upper().strip() != 'N':
     for driver in driver_list:
         tmp = driver.update_vf(ENV, COOKIE, vehicle_dict)
+        if tmp != None:
+            driver_error_list.append(driver)
+
+
+driver_wh_error_list = []
+
+if raw_input("\nKey 'N' to skip driver working hour update\n>>").upper().strip() != 'N':
+    for driver in driver_list:
+        tmp = driver.update_wh_start(ENV, COOKIE)
         if tmp != None:
             driver_error_list.append(driver)
